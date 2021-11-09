@@ -6,14 +6,19 @@ PINS = [5, 4, 14, 12]
 TRIGGER_PIN = 0
 ECHO_PIN = 13
 
-int maxDist = 150;                               //Maximum sensing distance (Objects further than this distance are ignored)
-int stopDist = 50;                               //Minimum distance from an object to stop in cm
-float timeOut = 2*(maxDist+10)/100/340*1000000;   //Maximum time to wait for a return signal
+# Maximum sensing distance (Objects further than this distance are ignored)
+int maxDist = 150 
+# Minimum distance from an object to stop in cm                            
+int stopDist = 50  
+# Maximum time to wait for a return signal
+float timeOut = 2*(maxDist+10)/100/340*1000000
 
-int motorSpeed = 55;                             //The maximum motor speed
-int motorOffset = 10;                             //Factor to account for one side being more powerful
-int turnSpeed = 50;                               //Amount to add to motor speed when turning
-
+# The maximum motor speed
+int motorSpeed = 55    
+# Factor to account for one side being more powerful                       
+int motorOffset = 10  
+#Amount to add to motor speed when turning                       
+int turnSpeed = 50
 
 
 class Motor:
@@ -144,13 +149,13 @@ def checkDirection(ultrasonic,motor):
 
     # reset robot to look forward
     motor.left()
-    
+
     # If both directions are clear, turn left
     if (distances[0]>=200 and distances[1]>=200):
         turnDir = 0;
 
     # If both directions are blocked, turn around
-    elif (distances[0]<=stopDist && distances[1]<=stopDist)   
+    elif (distances[0]<=stopDist and distances[1]<=stopDist)   
         turnDir = 1;
     # If left has more space, turn left
     elif (distances[0]>=distances[1])                          
