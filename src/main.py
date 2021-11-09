@@ -6,6 +6,15 @@ PINS = [5, 4, 14, 12]
 TRIGGER_PIN = 0
 ECHO_PIN = 13
 
+int maxDist = 150;                               //Maximum sensing distance (Objects further than this distance are ignored)
+int stopDist = 50;                               //Minimum distance from an object to stop in cm
+float timeOut = 2*(maxDist+10)/100/340*1000000;   //Maximum time to wait for a return signal
+
+int motorSpeed = 55;                             //The maximum motor speed
+int motorOffset = 10;                             //Factor to account for one side being more powerful
+int turnSpeed = 50;                               //Amount to add to motor speed when turning
+
+
 
 class Motor:
     def __init__(self, pins):
@@ -35,6 +44,7 @@ class Motor:
     def __launch(self):
         for i in range(4):
             self.pins[i].value(self.configuration[i])
+
 
 
 class HCSR04:
@@ -117,11 +127,65 @@ led.off()
 ultrasonic = HCSR04(TRIGGER_PIN, ECHO_PIN)
 motor = Motor(PINS)
 motor.forward()
+
+def checkDirection(ultrasonic,motor):
+
+    distances = [0,0]
+    turnDir = 1
+
+    # robot looks to the left
+    motor.left()
+    distances[0] = ultrasonic.distance_cm()
+
+    # robot looks to the right
+    motor.right()
+    motor.right()
+    distances[1] = ultrasonic.distance_cm()
+
+    # reset robot to look forward
+    motor.left()
+    
+    # If both directions are clear, turn left
+    if (distances[0]>=200 and distances[1]>=200):
+        turnDir = 0;
+
+    # If both directions are blocked, turn around
+    elif (distances[0]<=stopDist && distances[1]<=stopDist)   
+        turnDir = 1;
+    # If left has more space, turn left
+    elif (distances[0]>=distances[1])                          
+        turnDir = 0;
+    # If right has more space, turn right
+    elif (distances[0]<distances[1])                           
+        turnDir = 2;
+  
+    return turnDir;
+
+
 while True:
+
+    time.sleep(0.75)
+    
     distance = ultrasonic.distance_cm()
-    print(distance)
-    if distance < 10:
+
+    if(distance >= stopDist): motor.forward()
+
+    while(distance >= stopDist):
+        distance = ultrasonic.distance_cm()
+        time.sleep(0.25)
+    
+    motor.stop()
+
+    turnDir = checkDirection(ultrasonic,motor)
+    print(turnDir)
+
+    if(turnDir == 0):
+        motor.left()
+    
+    elif(turnDir == 1):
+        motor.left()
+        motor.left()
+    
+    elif(turnDir == 2):
         motor.right()
-        time.sleep(2.5)
-    else:
-        motor.forward()
+    
