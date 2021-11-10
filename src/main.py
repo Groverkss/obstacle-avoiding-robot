@@ -2,6 +2,11 @@ import machine
 from machine import Pin
 import time
 
+import requests
+import json
+
+from oneM2M_functions import *
+
 PINS = [5, 4, 14, 12]
 TRIGGER_PIN = 0
 ECHO_PIN = 13
@@ -20,6 +25,8 @@ int motorOffset = 10
 #Amount to add to motor speed when turning                       
 int turnSpeed = 50
 
+# onem2m server
+uri_cnt = "https://esw-onem2m.iiit.ac.in/~/in-cse/in-name/Team-11/Node-1/Data"
 
 class Motor:
     def __init__(self, pins):
@@ -49,7 +56,6 @@ class Motor:
     def __launch(self):
         for i in range(4):
             self.pins[i].value(self.configuration[i])
-
 
 
 class HCSR04:
@@ -152,45 +158,63 @@ def checkDirection(ultrasonic,motor):
 
     # If both directions are clear, turn left
     if (distances[0]>=200 and distances[1]>=200):
-        turnDir = 0;
+        turnDir = 0
 
     # If both directions are blocked, turn around
     elif (distances[0]<=stopDist and distances[1]<=stopDist)   
-        turnDir = 1;
+        turnDir = 1
     # If left has more space, turn left
     elif (distances[0]>=distances[1])                          
-        turnDir = 0;
+        turnDir = 0
     # If right has more space, turn right
     elif (distances[0]<distances[1])                           
-        turnDir = 2;
+        turnDir = 2
   
-    return turnDir;
+    return turnDir
 
 
-while True:
+def start():
 
-    time.sleep(0.75)
-    
-    distance = ultrasonic.distance_cm()
+    # delete datacontainer directions
+    oneM2Mfunctions.delete(str.concat(uri_cnt,"Directions", data_format="json")
 
-    if(distance >= stopDist): motor.forward()
+    # create datacontainer directions
+    oneM2Mfunctions.create_cnt(str.concat(uri_cnt,"Directions",cnt_labels=["Directions"], data_format="json")
 
-    while(distance >= stopDist):
+    while True:
+
+        time.sleep(0.75)
+        
         distance = ultrasonic.distance_cm()
-        time.sleep(0.25)
-    
-    motor.stop()
 
-    turnDir = checkDirection(ultrasonic,motor)
-    print(turnDir)
+        if(distance >= stopDist): motor.forward()
 
-    if(turnDir == 0):
-        motor.left()
-    
-    elif(turnDir == 1):
-        motor.left()
-        motor.left()
-    
-    elif(turnDir == 2):
-        motor.right()
-    
+        while(distance >= stopDist):
+            distance = ultrasonic.distance_cm()
+            time.sleep(0.25)
+        
+        motor.stop()
+
+        turnDir = checkDirection(ultrasonic,motor)
+        print(turnDir)
+
+        if(turnDir == 0):
+            motor.left()
+            # adding no of obstacles
+            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "Left", cin_labels=["Left"], data_format="json")
+        
+        elif(turnDir == 1):
+            motor.left()
+            motor.left()
+            # adding no of obstacles
+            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "180", cin_labels=["Turned around"], data_format="json")
+        
+        elif(turnDir == 2):
+            motor.right()
+            # adding no of obstacles
+            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "Right", cin_labels=["Right"], data_format="json")
+
+
+if __name__ == "__main__":
+
+    start();
