@@ -232,18 +232,18 @@ def start():
         if(turnDir == 0):
             motor.left()
             # adding no of obstacles
-            create_data_cin(str.concat(uri_cnt,"/Directions"), "Left", cin_labels=["Left"], data_format="json")
+            create_data_cin((uri_cnt,"/Directions"+ "Left"), cin_labels=["Left"], data_format="json")
         
         elif(turnDir == 1):
             motor.left()
             motor.left()
             # adding no of obstacles
-            create_data_cin(str.concat(uri_cnt,"/Directions"), "180", cin_labels=["Turned around"], data_format="json")
+            create_data_cin((uri_cnt,"/Directions"+ "180"), cin_labels=["Turned around"], data_format="json")
         
         elif(turnDir == 2):
             motor.right()
             # adding no of obstacles
-            create_data_cin(str.concat(uri_cnt,"/Directions"), "Right", cin_labels=["Right"], data_format="json")
+            create_data_cin((uri_cnt,"/Directions" + "Right"), cin_labels=["Right"], data_format="json")
 
 
 if __name__ == "__main__":
