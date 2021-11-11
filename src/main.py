@@ -7,23 +7,25 @@ import json
 
 from oneM2M_functions import *
 
+
+
 PINS = [5, 4, 14, 12]
 TRIGGER_PIN = 0
 ECHO_PIN = 13
 
 # Maximum sensing distance (Objects further than this distance are ignored)
-int maxDist = 150 
+maxDist = 150 
 # Minimum distance from an object to stop in cm                            
-int stopDist = 50  
+stopDist = 50  
 # Maximum time to wait for a return signal
-float timeOut = 2*(maxDist+10)/100/340*1000000
+timeOut = 2*(maxDist+10)/100/340*1000000
 
 # The maximum motor speed
-int motorSpeed = 55    
+motorSpeed = 55    
 # Factor to account for one side being more powerful                       
-int motorOffset = 10  
+motorOffset = 10  
 #Amount to add to motor speed when turning                       
-int turnSpeed = 50
+turnSpeed = 50
 
 # onem2m server
 uri_cnt = "https://esw-onem2m.iiit.ac.in/~/in-cse/in-name/Team-11/Node-1/Data"
@@ -139,6 +141,36 @@ ultrasonic = HCSR04(TRIGGER_PIN, ECHO_PIN)
 motor = Motor(PINS)
 motor.forward()
 
+def create_data_cin(uri_cnt, value, cin_labels="", data_format="json"):
+    """
+        Method description:
+        Deletes/Unregisters an application entity(AE) from the OneM2M framework/tree
+        under the specified CSE
+
+        Parameters:
+        uri_cse : [str] URI of parent CSE
+        ae_name : [str] name of the AE
+        fmt_ex : [str] payload format
+    """
+    headers = {
+        'X-M2M-Origin': '2vCsok51z6:xB2p5Mj@N2',
+        'Content-type': 'application/{};ty=4'.format(data_format)}
+
+    body = {
+        "m2m:cin": {
+            "con": "{}".format(value),
+            "lbl": cin_labels,
+            "cnf": "text"
+        }
+    }
+    
+    try:
+        response = requests.post(uri_cnt, json=body, headers=headers)
+    except TypeError:
+        response = requests.post(uri_cnt, data=json.dumps(body), headers=headers)
+    print('Return code : {}'.format(response.status_code))
+    print('Return Content : {}'.format(response.text))
+
 def checkDirection(ultrasonic,motor):
 
     distances = [0,0]
@@ -161,13 +193,13 @@ def checkDirection(ultrasonic,motor):
         turnDir = 0
 
     # If both directions are blocked, turn around
-    elif (distances[0]<=stopDist and distances[1]<=stopDist)   
+    elif (distances[0]<=stopDist and distances[1]<=stopDist):  
         turnDir = 1
     # If left has more space, turn left
-    elif (distances[0]>=distances[1])                          
+    elif (distances[0]>=distances[1]):                        
         turnDir = 0
     # If right has more space, turn right
-    elif (distances[0]<distances[1])                           
+    elif (distances[0]<distances[1]):                         
         turnDir = 2
   
     return turnDir
@@ -176,10 +208,10 @@ def checkDirection(ultrasonic,motor):
 def start():
 
     # delete datacontainer directions
-    oneM2Mfunctions.delete(str.concat(uri_cnt,"Directions", data_format="json")
+    # delete(str.concat(uri_cnt,"Directions"), data_format="json")
 
     # create datacontainer directions
-    oneM2Mfunctions.create_cnt(str.concat(uri_cnt,"Directions",cnt_labels=["Directions"], data_format="json")
+    # create_cnt(str.concat(uri_cnt,"Directions"),cnt_labels=["Directions"], data_format="json")
 
     while True:
 
@@ -201,20 +233,24 @@ def start():
         if(turnDir == 0):
             motor.left()
             # adding no of obstacles
-            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "Left", cin_labels=["Left"], data_format="json")
+            create_data_cin(str.concat(uri_cnt,"/Directions"), "Left", cin_labels=["Left"], data_format="json")
         
         elif(turnDir == 1):
             motor.left()
             motor.left()
             # adding no of obstacles
-            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "180", cin_labels=["Turned around"], data_format="json")
+            create_data_cin(str.concat(uri_cnt,"/Directions"), "180", cin_labels=["Turned around"], data_format="json")
         
         elif(turnDir == 2):
             motor.right()
             # adding no of obstacles
-            oneM2Mfunctions.create_data_cin(str.concat(uri_cnt,"/Directions", "Right", cin_labels=["Right"], data_format="json")
+            create_data_cin(str.concat(uri_cnt,"/Directions"), "Right", cin_labels=["Right"], data_format="json")
 
 
 if __name__ == "__main__":
 
-    start();
+    start()
+    # create_data_cin(str.concat(uri_cnt,"/Directions"), "Left", cin_labels=["Left"], data_format="json")
+    # create_data_cin(str.concat(uri_cnt,"/Directions"), "180", cin_labels=["Turned around"], data_format="json")
+    # create_data_cin(str.concat(uri_cnt,"/Directions"), "Right", cin_labels=["Right"], data_format="json")
+
