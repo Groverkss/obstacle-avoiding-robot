@@ -2,11 +2,10 @@ import machine
 from machine import Pin
 import time
 
-import requests
+import urequests
 import json
 
 from oneM2M_functions import *
-
 
 
 PINS = [5, 4, 14, 12]
@@ -165,9 +164,9 @@ def create_data_cin(uri_cnt, value, cin_labels="", data_format="json"):
     }
     
     try:
-        response = requests.post(uri_cnt, json=body, headers=headers)
+        response = urequests.post(uri_cnt, json=body, headers=headers)
     except TypeError:
-        response = requests.post(uri_cnt, data=json.dumps(body), headers=headers)
+        response = urequests.post(uri_cnt, data=json.dumps(body), headers=headers)
     print('Return code : {}'.format(response.status_code))
     print('Return Content : {}'.format(response.text))
 
