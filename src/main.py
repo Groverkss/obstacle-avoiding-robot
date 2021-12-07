@@ -1,33 +1,26 @@
 import machine
 from machine import Pin
 import time
+import network
 
 import urequests
-import json
-
-from oneM2M_functions import *
-
+import ujson
 
 PINS = [5, 4, 14, 12]
 TRIGGER_PIN = 0
 ECHO_PIN = 13
 
-# Maximum sensing distance (Objects further than this distance are ignored)
-maxDist = 150 
-# Minimum distance from an object to stop in cm                            
-stopDist = 50  
-# Maximum time to wait for a return signal
-timeOut = 2*(maxDist+10)/100/340*1000000
+# Minimum distance from an object to stop in cm
+stopDist = 25
 
-# The maximum motor speed
-motorSpeed = 55    
-# Factor to account for one side being more powerful                       
-motorOffset = 10  
-#Amount to add to motor speed when turning                       
-turnSpeed = 50
+TURN_TIME = 800  # ms
 
 # onem2m server
 uri_cnt = "https://esw-onem2m.iiit.ac.in/~/in-cse/in-name/Team-11/Node-1/Data"
+
+WIFI_SSID = "Archer C6"
+WIFI_PASS = "Kunwar@123"
+
 
 class Motor:
     def __init__(self, pins):
@@ -45,10 +38,12 @@ class Motor:
     def left(self):
         self.configuration = [0, 1, 1, 0]
         self.__launch()
+        time.sleep_ms(TURN_TIME)
 
     def right(self):
         self.configuration = [1, 0, 0, 1]
         self.__launch()
+        time.sleep_ms(TURN_TIME)
 
     def stop(self):
         self.configuration = [0, 0, 0, 0]
@@ -132,75 +127,73 @@ class HCSR04:
         return cms
 
 
-# Led to know if NodeMCU is up
-led = Pin(2, Pin.OUT)
-led.off()
-
 ultrasonic = HCSR04(TRIGGER_PIN, ECHO_PIN)
 motor = Motor(PINS)
 motor.forward()
 
+
 def create_data_cin(uri_cnt, value, cin_labels="", data_format="json"):
     """
-        Method description:
-        Deletes/Unregisters an application entity(AE) from the OneM2M framework/tree
-        under the specified CSE
+    Method description:
+    Deletes/Unregisters an application entity(AE) from the OneM2M framework/tree
+    under the specified CSE
 
-        Parameters:
-        uri_cse : [str] URI of parent CSE
-        ae_name : [str] name of the AE
-        fmt_ex : [str] payload format
+    Parameters:
+    uri_cse : [str] URI of parent CSE
+    ae_name : [str] name of the AE
+    fmt_ex : [str] payload format
     """
     headers = {
-        'X-M2M-Origin': '2vCsok51z6:xB2p5Mj@N2',
-        'Content-type': 'application/{};ty=4'.format(data_format)}
+        "X-M2M-Origin": "2vCsok51z6:xB2p5Mj@N2",
+        "Content-type": "application/{};ty=4".format(data_format),
+    }
 
     body = {
-        "m2m:cin": {
-            "con": "{}".format(value),
-            "lbl": cin_labels,
-            "cnf": "text"
-        }
+        "m2m:cin": {"con": "{}".format(value), "lbl": cin_labels, "cnf": "text"}
     }
-    
-    try:
-        response = urequests.post(uri_cnt, json=body, headers=headers)
-    except TypeError:
-        response = urequests.post(uri_cnt, data=json.dumps(body), headers=headers)
-    print('Return code : {}'.format(response.status_code))
-    print('Return Content : {}'.format(response.text))
 
-def checkDirection(ultrasonic,motor):
+    response = urequests.post(uri_cnt, data=ujson.dumps(body), headers=headers)
+    print("Return code : {}".format(response.status_code))
+    print("Return Content : {}".format(response.text))
 
-    distances = [0,0]
+
+def checkDirection(ultrasonic, motor):
+
+    distances = [0, 0]
     turnDir = 1
 
     # robot looks to the left
+    print("Going to look left")
     motor.left()
     distances[0] = ultrasonic.distance_cm()
 
+    print("Distance at left: ", distances[0])
+
     # robot looks to the right
+    print("Going to look right")
     motor.right()
     motor.right()
     distances[1] = ultrasonic.distance_cm()
+
+    print("Distance at right: ", distances[1])
 
     # reset robot to look forward
     motor.left()
 
     # If both directions are clear, turn left
-    if (distances[0]>=200 and distances[1]>=200):
+    if distances[0] >= 200 and distances[1] >= 200:
         turnDir = 0
 
     # If both directions are blocked, turn around
-    elif (distances[0]<=stopDist and distances[1]<=stopDist):  
+    elif distances[0] <= stopDist and distances[1] <= stopDist:
         turnDir = 1
     # If left has more space, turn left
-    elif (distances[0]>=distances[1]):                        
+    elif distances[0] >= distances[1]:
         turnDir = 0
     # If right has more space, turn right
-    elif (distances[0]<distances[1]):                         
+    elif distances[0] < distances[1]:
         turnDir = 2
-  
+
     return turnDir
 
 
@@ -212,44 +205,70 @@ def start():
     # create datacontainer directions
     # create_cnt(str.concat(uri_cnt,"Directions"),cnt_labels=["Directions"], data_format="json")
 
+    # Led to know if NodeMCU is up
+    led = Pin(2, Pin.OUT)
+    led.off()
+
+    print("Starting!")
+    motor.forward()
     while True:
 
         time.sleep(0.75)
-        
+
         distance = ultrasonic.distance_cm()
 
-        if(distance >= stopDist): motor.forward()
+        if distance >= stopDist:
+            motor.forward()
 
-        while(distance >= stopDist):
+        while distance >= stopDist:
             distance = ultrasonic.distance_cm()
-            time.sleep(0.25)
-        
+
         motor.stop()
 
-        turnDir = checkDirection(ultrasonic,motor)
-        print(turnDir)
+        turnDir = checkDirection(ultrasonic, motor)
 
-        if(turnDir == 0):
+        if turnDir == 0:
             motor.left()
             # adding no of obstacles
-            create_data_cin((uri_cnt,"/Directions"+ "Left"), cin_labels=["Left"], data_format="json")
-        
-        elif(turnDir == 1):
+            print("Turn Left")
+            # create_data_cin(
+            #     uri_cnt + "/Directions",
+            #     "Left",
+            #     cin_labels=["Left"],
+            # )
+
+        elif turnDir == 1:
             motor.left()
             motor.left()
+            print("Turn Around")
             # adding no of obstacles
-            create_data_cin((uri_cnt,"/Directions"+ "180"), cin_labels=["Turned around"], data_format="json")
-        
-        elif(turnDir == 2):
+            # create_data_cin(
+            #     uri_cnt + "/Directions",
+            #     "180",
+            #     cin_labels=["Turned around"],
+            # )
+
+        elif turnDir == 2:
             motor.right()
+            print("Turn Right")
             # adding no of obstacles
-            create_data_cin((uri_cnt,"/Directions" + "Right"), cin_labels=["Right"], data_format="json")
+            # create_data_cin(
+            #     uri_cnt + "/Directions",
+            #     "Right",
+            #     cin_labels=["Right"],
+            # )
 
 
 if __name__ == "__main__":
+
+    # Connect to wifi
+    # sta_if = network.WLAN(network.STA_IF)
+    # sta_if.active(True)
+    # sta_if.connect(WIFI_SSID, WIFI_PASS)
+    # print("IFCONFIG:")
+    # print(sta_if.ifconfig())
 
     start()
     # create_data_cin(str.concat(uri_cnt,"/Directions"), "Left", cin_labels=["Left"], data_format="json")
     # create_data_cin(str.concat(uri_cnt,"/Directions"), "180", cin_labels=["Turned around"], data_format="json")
     # create_data_cin(str.concat(uri_cnt,"/Directions"), "Right", cin_labels=["Right"], data_format="json")
-
