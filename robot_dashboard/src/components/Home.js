@@ -2,6 +2,9 @@ import React, { Component , useState , useEffect } from 'react'
 import axios from 'axios'
 import Paper from '@material-ui/core/Paper'
 import Grid from '@mui/material/Grid'
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+
 import {
   ArgumentAxis,
   ValueAxis,
@@ -14,13 +17,9 @@ import { Animation } from '@devexpress/dx-react-chart'
 
 var XMLParser = require('react-xml-parser');
 
-
-  
 const sleep = time => {
   return new Promise((resolve) => setTimeout(resolve, time));
 };
-
-
 
 
 const Home = () => {
@@ -37,8 +36,9 @@ const Home = () => {
       "argument":"Turn Around" , "value":0
     }]
   )
-  
 
+  const [button, setButton] = useState(false)
+  
   useEffect(() => {
     func();
   }, [])
@@ -57,7 +57,6 @@ const Home = () => {
     let instances = xml.getElementsByTagName('con')
     let new_num = instances.length
     let time = obstData.length*3
-    
     
     let left = 0
     let right = 0
@@ -86,7 +85,6 @@ const Home = () => {
     console.log(direction)
     
   }
-  
 
   const func = async () =>{
     while(true){
@@ -94,10 +92,142 @@ const Home = () => {
       await sleep(3000);
     }
   }
-  
+
+  const toggleButton = async() =>{
+    setButton(!button)
+    let body;
+    if (button == true){
+      console.log(button)
+      body = JSON.stringify({
+        "m2m:cin":{
+            "lbl":[
+                "start"
+            ],
+            "con": "start"
+        }
+      })
+    }
+    
+    else {
+      console.log(button)
+      body = JSON.stringify({
+        "m2m:cin":{
+            "lbl":[
+                "stop"
+            ],
+            "con": "stop"
+        }
+      })
+    }
+    
+    const res = await axios.post('/State', body , {
+      headers: {
+          'X-M2M-ORIGIN': '2vCsok51z6:xB2p5Mj@N2',
+          'Content-Type': 'application/json;ty=4',
+      }
+    })
+    .then(res => console.log('Sent  ',button))
+    .catch(err => console.log('Error', err))
+      
+  }
+
+  const setSpeedSlow = async() =>{
+    
+    const body = JSON.stringify({
+      "m2m:cin":{
+          "lbl":[
+              "speed"
+          ],
+          "con": "slow"
+      }
+    })
+
+    const res = await axios.post('/Speed', body , {
+      headers: {
+          'X-M2M-ORIGIN': '2vCsok51z6:xB2p5Mj@N2',
+          'Content-Type': 'application/json;ty=4',
+      }
+    })
+    .then(res => console.log('Sent  ',button))
+    .catch(err => console.log('Error', err))
+      
+  }
+
+  const setSpeedMedium = async() =>{
+    
+    const body = JSON.stringify({
+      "m2m:cin":{
+          "lbl":[
+              "speed"
+          ],
+          "con": "medium"
+      }
+    })
+
+    const res = await axios.post('/Speed', body , {
+      headers: {
+          'X-M2M-ORIGIN': '2vCsok51z6:xB2p5Mj@N2',
+          'Content-Type': 'application/json;ty=4',
+      }
+    })
+    .then(res => console.log('Sent  ',button))
+    .catch(err => console.log('Error', err))
+      
+  }
+
+  const setSpeedFast = async() =>{
+    
+    const body = JSON.stringify({
+      "m2m:cin":{
+          "lbl":[
+              "speed"
+          ],
+          "con": "fast"
+      }
+    })
+
+    const res = await axios.post('/Speed', body , {
+      headers: {
+          'X-M2M-ORIGIN': '2vCsok51z6:xB2p5Mj@N2',
+          'Content-Type': 'application/json;ty=4',
+      }
+    })
+    .then(res => console.log('Sent  ',button))
+    .catch(err => console.log('Error', err))
+      
+  }
+
     return (
+
       <>
+
     <h1 margin>Dashboard</h1>
+    <h3>Control the start/stop state and the speed of the robot from the dashboard:
+    </h3>
+    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={toggleButton} label={button?"Start":"Stop"}>
+      {button? "Start":"Stop"}
+    </Button>
+    {/* <br/>
+    <br/>
+    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedSlow} >
+      Slow
+    </Button>
+    <br/>
+    <br/>
+
+    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedMedium} >
+      Medium
+    </Button>
+    <br/>
+    <br/>
+
+    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedFast} >
+      Fast
+    </Button> */}
+    <br/>
+    <br/>
+
+
     <h3>This data is obtained in real time as the robot explores its environment.
       The data is pushed and retrieved from the IIIT OM2M server.
     </h3>
@@ -116,7 +246,6 @@ const Home = () => {
             <Title text="Number of obstacles"/>
           </ValueAxis>
           
-
           <LineSeries valueField="value" argumentField="argument" />
           <Title text="Number of Obstacles Encountered VS Time (in s)" />
           </Chart>
@@ -147,6 +276,7 @@ const Home = () => {
       </Grid>
 
     </Grid>
+    <br></br>
 
       </>
     )

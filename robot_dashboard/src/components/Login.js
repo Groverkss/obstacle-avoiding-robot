@@ -26,8 +26,9 @@ const Login = () => {
 
       event.preventDefault();
         const data = new FormData(event.currentTarget);
+        
     
-        let email= data.get('email')
+        let email= data.get('name')
         let password= data.get('password')
 
         console.log(email,password)
@@ -49,8 +50,10 @@ const Login = () => {
           let pwd = arr[1]
           
           const isMatch = await bcrypt.compare(password , pwd)
-          if(isMatch & name === email){
+
+          if(isMatch && name === email){
             navigate('/home')
+          
             return
           }
         }
