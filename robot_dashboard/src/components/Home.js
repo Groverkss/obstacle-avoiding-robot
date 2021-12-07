@@ -202,28 +202,12 @@ const Home = () => {
       <>
 
     <h1 margin>Dashboard</h1>
-    <h3>Control the start/stop state and the speed of the robot from the dashboard:
+    <h3>Control the start/stop state of the robot from the dashboard:
     </h3>
     <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={toggleButton} label={button?"Start":"Stop"}>
       {button? "Start":"Stop"}
     </Button>
-    {/* <br/>
-    <br/>
-    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedSlow} >
-      Slow
-    </Button>
-    <br/>
-    <br/>
-
-    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedMedium} >
-      Medium
-    </Button>
-    <br/>
-    <br/>
-
-    <Button style={{justifyContent: 'space-between'}} size="large" variant="contained" onClick={setSpeedFast} >
-      Fast
-    </Button> */}
+    
     <br/>
     <br/>
 

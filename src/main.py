@@ -125,7 +125,6 @@ class HCSR04:
         cms = (pulse_time / 2) / 29.1
         return cms
 
-
 ultrasonic = HCSR04(TRIGGER_PIN, ECHO_PIN)
 motor = Motor(PINS)
 motor.forward()

@@ -1,6 +1,7 @@
 import json
 import requests
 
+
 def get_data(uri, data_format="json"):
     """
         Method description:
@@ -17,11 +18,11 @@ def get_data(uri, data_format="json"):
         'Content-type': 'application/{}'.format(data_format)}
 
     response = requests.get(uri, headers=headers)
-    print('Return code : {}'.format(response.status_code))
-    print('Return Content : {}'.format(response.text))
+    # print('Return code : {}'.format(response.status_code))
+    # print('Return Content : {}'.format(response.text))
     _resp = json.loads(response.text)
-    return response.status_code, _resp["m2m:cin"]["con"] ## To get latest or oldest content instance
-    #return response.status_code, _resp["m2m:cnt"]#["con"] ## to get whole data of container (all content instances)
+    # return response.status_code, _resp["m2m:cin"]["con"] ## To get latest or oldest content instance
+    return response.status_code, _resp["m2m:cnt"]#["con"] ## to get whole data of container (all content instances)
 
 def get_database():
     from pymongo import MongoClient
@@ -48,14 +49,14 @@ if __name__ == "__main__":
     print("collection created")
 
     uri_cnt = "https://esw-onem2m.iiit.ac.in/~/in-cse/in-name/Team-11/Node-1/Data"
-
     
-    print(get_data(uri_cnt + "/Directions"))
+    data = get_data(uri_cnt + "/Directions?rcn=4")
 
+    data = data[1]
 
+    print(data)
 
-    # collection_name.insert_many([item_1,item_2])
-
+    collection_name.insert_many(data["m2m:cin"])
 
     print("data inserted")
 
