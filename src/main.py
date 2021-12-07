@@ -21,7 +21,6 @@ uri_cnt = "https://esw-onem2m.iiit.ac.in/~/in-cse/in-name/Team-11/Node-1/Data"
 WIFI_SSID = "Archer C6"
 WIFI_PASS = "Kunwar@123"
 
-
 class Motor:
     def __init__(self, pins):
         self.pins = [Pin(pin, Pin.OUT) for pin in pins]
@@ -131,7 +130,6 @@ ultrasonic = HCSR04(TRIGGER_PIN, ECHO_PIN)
 motor = Motor(PINS)
 motor.forward()
 
-
 def create_data_cin(uri_cnt, value, cin_labels="", data_format="json"):
     """
     Method description:
@@ -156,6 +154,27 @@ def create_data_cin(uri_cnt, value, cin_labels="", data_format="json"):
     print("Return code : {}".format(response.status_code))
     print("Return Content : {}".format(response.text))
 
+def get_data(uri, data_format="json"):
+    """
+        Method description:
+        Deletes/Unregisters an application entity(AE) from the OneM2M framework/tree
+        under the specified CSE
+
+        Parameters:
+        uri_cse : [str] URI of parent CSE
+        ae_name : [str] name of the AE
+        fmt_ex : [str] payload format
+    """
+    headers = {
+        'X-M2M-Origin': '2vCsok51z6:xB2p5Mj@N2',
+        'Content-type': 'application/{}'.format(data_format)}
+
+    response = requests.get(uri, headers=headers)
+    print('Return code : {}'.format(response.status_code))
+    print('Return Content : {}'.format(response.text))
+    _resp = json.loads(response.text)
+    return response.status_code, _resp["m2m:cin"]["con"] ## To get latest or oldest content instance
+    # return response.status_code, _resp["m2m:cnt"]#["con"] ## to get whole data of container (all content instances)
 
 def checkDirection(ultrasonic, motor):
 
@@ -211,7 +230,16 @@ def start():
 
     print("Starting!")
     motor.forward()
+
     while True:
+
+        start = get_data(
+            uri_cnt + "/State"
+            )
+
+        if start == "stop": 
+            motor.stop()
+            continue
 
         time.sleep(0.75)
 
